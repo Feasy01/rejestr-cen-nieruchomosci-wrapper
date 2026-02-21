@@ -3,10 +3,13 @@ from __future__ import annotations
 import logging
 import uuid
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import AsyncGenerator
 
 import httpx
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -62,6 +65,20 @@ async def request_id_middleware(request: Request, call_next) -> Response:  # typ
 app.include_router(transactions.router)
 app.include_router(metadata.router)
 
+_STATIC_DIR = Path(__file__).resolve().parent.parent / "static"
+
+
+@app.get("/map")
+async def map_page() -> Response:
+    index = _STATIC_DIR / "index.html"
+    if index.exists():
+        return FileResponse(str(index))
+    return Response(content="Frontend not built. Run: cd frontend && npm run build", status_code=404)
+
+
+if _STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
+
 
 @app.get("/")
 async def root() -> dict[str, str]:
@@ -69,4 +86,5 @@ async def root() -> dict[str, str]:
         "service": "RCN Wrapper API",
         "version": "0.1.0",
         "docs": "/docs",
+        "map": "/map",
     }
