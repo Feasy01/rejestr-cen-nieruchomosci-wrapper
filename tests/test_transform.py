@@ -10,6 +10,7 @@ from app.services.transform import (
     apply_local_filters,
     bbox_4326_to_2180,
     feature_to_transaction,
+    sort_items,
 )
 from tests.conftest import SAMPLE_FEATURE_XML
 
@@ -223,3 +224,125 @@ class TestLocalFilters:
         features = [_make_feature(gml_id="no_price", price="")]
         result = apply_local_filters(features, min_price=Decimal("1"))
         assert len(result) == 0
+
+    def test_filter_by_min_price_per_sqm(self):
+        features = [
+            _make_feature(gml_id="cheap", price="300000", area="60.0"),  # 5000/m²
+            _make_feature(gml_id="expensive", price="600000", area="60.0"),  # 10000/m²
+        ]
+        result = apply_local_filters(features, min_price_per_sqm=Decimal("7000"))
+        assert len(result) == 1
+        assert result[0].gml_id == "expensive"
+
+    def test_filter_by_max_price_per_sqm(self):
+        features = [
+            _make_feature(gml_id="cheap", price="300000", area="60.0"),  # 5000/m²
+            _make_feature(gml_id="expensive", price="600000", area="60.0"),  # 10000/m²
+        ]
+        result = apply_local_filters(features, max_price_per_sqm=Decimal("7000"))
+        assert len(result) == 1
+        assert result[0].gml_id == "cheap"
+
+    def test_price_per_sqm_filter_excludes_missing_data(self):
+        features = [_make_feature(gml_id="no_area", price="300000", area="")]
+        result = apply_local_filters(features, min_price_per_sqm=Decimal("1"))
+        assert len(result) == 0
+
+
+class TestPricePerSqm:
+    def test_computed_when_both_present(self):
+        f = _make_feature(price="600000", area="60.0")
+        now = datetime.now(timezone.utc)
+        item = feature_to_transaction(f, fetched_at=now)
+        assert item.price_per_sqm == Decimal("10000.00")
+
+    def test_none_when_price_missing(self):
+        f = _make_feature(price="", area="60.0")
+        now = datetime.now(timezone.utc)
+        item = feature_to_transaction(f, fetched_at=now)
+        assert item.price_per_sqm is None
+
+    def test_none_when_area_missing(self):
+        f = _make_feature(price="600000", area="")
+        now = datetime.now(timezone.utc)
+        item = feature_to_transaction(f, fetched_at=now)
+        assert item.price_per_sqm is None
+
+    def test_none_when_area_zero(self):
+        f = _make_feature(price="600000", area="0")
+        now = datetime.now(timezone.utc)
+        item = feature_to_transaction(f, fetched_at=now)
+        assert item.price_per_sqm is None
+
+
+class TestSortItems:
+    def _make_items(self):
+        now = datetime.now(timezone.utc)
+        return [
+            feature_to_transaction(
+                _make_feature(gml_id="a", price="300000", area="50.0", rooms="2", date="2024-01-01 00:00:00+01"),
+                fetched_at=now,
+            ),
+            feature_to_transaction(
+                _make_feature(gml_id="b", price="600000", area="80.0", rooms="4", date="2024-12-01 00:00:00+01"),
+                fetched_at=now,
+            ),
+            feature_to_transaction(
+                _make_feature(gml_id="c", price="450000", area="60.0", rooms="3", date="2024-06-15 00:00:00+02"),
+                fetched_at=now,
+            ),
+        ]
+
+    def test_sort_by_price_asc(self):
+        items = self._make_items()
+        sorted_items = sort_items(items, sort_by="price_brutto")
+        ids = [i.id for i in sorted_items]
+        assert ids == ["a", "c", "b"]
+
+    def test_sort_by_price_desc(self):
+        items = self._make_items()
+        sorted_items = sort_items(items, sort_by="price_brutto", descending=True)
+        ids = [i.id for i in sorted_items]
+        assert ids == ["b", "c", "a"]
+
+    def test_sort_by_rooms(self):
+        items = self._make_items()
+        sorted_items = sort_items(items, sort_by="rooms")
+        rooms = [i.rooms for i in sorted_items]
+        assert rooms == [2, 3, 4]
+
+    def test_sort_by_doc_date(self):
+        items = self._make_items()
+        sorted_items = sort_items(items, sort_by="doc_date")
+        dates = [i.doc_date for i in sorted_items]
+        assert dates == ["2024-01-01", "2024-06-15", "2024-12-01"]
+
+    def test_sort_by_price_per_sqm(self):
+        items = self._make_items()
+        sorted_items = sort_items(items, sort_by="price_per_sqm")
+        ppsm = [i.price_per_sqm for i in sorted_items]
+        assert ppsm == sorted(ppsm)
+
+    def test_none_values_sort_last_asc(self):
+        now = datetime.now(timezone.utc)
+        items = [
+            feature_to_transaction(_make_feature(gml_id="a", price="300000"), fetched_at=now),
+            feature_to_transaction(_make_feature(gml_id="b", price=""), fetched_at=now),
+            feature_to_transaction(_make_feature(gml_id="c", price="100000"), fetched_at=now),
+        ]
+        sorted_items = sort_items(items, sort_by="price_brutto")
+        ids = [i.id for i in sorted_items]
+        assert ids == ["c", "a", "b"]  # None last
+
+    def test_none_values_sort_last_desc(self):
+        now = datetime.now(timezone.utc)
+        items = [
+            feature_to_transaction(_make_feature(gml_id="a", price="300000"), fetched_at=now),
+            feature_to_transaction(_make_feature(gml_id="b", price=""), fetched_at=now),
+            feature_to_transaction(_make_feature(gml_id="c", price="100000"), fetched_at=now),
+        ]
+        sorted_items = sort_items(items, sort_by="price_brutto", descending=True)
+        ids = [i.id for i in sorted_items]
+        # Desc: highest first, None last
+        assert ids[-1] == "b"
+        assert ids[0] == "a"

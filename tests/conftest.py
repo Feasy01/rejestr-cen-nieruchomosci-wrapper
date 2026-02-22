@@ -111,6 +111,137 @@ SAMPLE_CAPABILITIES_XML = b"""\
 """
 
 
+SAMPLE_MULTI_FEATURE_XML = b"""\
+<?xml version='1.0' encoding="UTF-8" ?>
+<wfs:FeatureCollection
+   xmlns:ms="http://mapserver.gis.umn.edu/mapserver"
+   xmlns:gml="http://www.opengis.net/gml/3.2"
+   xmlns:wfs="http://www.opengis.net/wfs/2.0"
+   numberMatched="unknown" numberReturned="3">
+    <wfs:member>
+      <ms:lokale gml:id="lokale.1">
+        <ms:msGeometry>
+          <gml:Point gml:id="lokale.1.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>400000.0 600000.0</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:serwis_rcn></ms:serwis_rcn>
+        <ms:teryt>0617</ms:teryt>
+        <ms:tran_przestrzen_nazw></ms:tran_przestrzen_nazw>
+        <ms:tran_lokalny_id_iip></ms:tran_lokalny_id_iip>
+        <ms:tran_wersja_id></ms:tran_wersja_id>
+        <ms:tran_oznaczenie_trans></ms:tran_oznaczenie_trans>
+        <ms:tran_rodzaj_trans>wolnyRynek</ms:tran_rodzaj_trans>
+        <ms:tran_rodzaj_rynku>wtorny</ms:tran_rodzaj_rynku>
+        <ms:tran_sprzedajacy></ms:tran_sprzedajacy>
+        <ms:tran_kupujacy></ms:tran_kupujacy>
+        <ms:tran_cena_brutto>300000</ms:tran_cena_brutto>
+        <ms:tran_vat></ms:tran_vat>
+        <ms:dok_oznaczenie>AN 1/2024</ms:dok_oznaczenie>
+        <ms:dok_data>2024-01-15 00:00:00+01</ms:dok_data>
+        <ms:dok_tworca>NOTARY A</ms:dok_tworca>
+        <ms:nier_rodzaj></ms:nier_rodzaj>
+        <ms:nier_prawo></ms:nier_prawo>
+        <ms:nier_udzial>1/1</ms:nier_udzial>
+        <ms:nier_pow_gruntu></ms:nier_pow_gruntu>
+        <ms:nier_cena_brutto></ms:nier_cena_brutto>
+        <ms:nier_vat></ms:nier_vat>
+        <ms:lok_id_lokalu></ms:lok_id_lokalu>
+        <ms:lok_nr_lokalu></ms:lok_nr_lokalu>
+        <ms:lok_funkcja>mieszkalna</ms:lok_funkcja>
+        <ms:lok_liczba_izb>2</ms:lok_liczba_izb>
+        <ms:lok_nr_kond>3</ms:lok_nr_kond>
+        <ms:lok_pow_uzyt>50.0</ms:lok_pow_uzyt>
+        <ms:lok_pow_przyn></ms:lok_pow_przyn>
+        <ms:lok_cena_brutto></ms:lok_cena_brutto>
+        <ms:lok_vat></ms:lok_vat>
+        <ms:lok_adres></ms:lok_adres>
+      </ms:lokale>
+    </wfs:member>
+    <wfs:member>
+      <ms:lokale gml:id="lokale.2">
+        <ms:msGeometry>
+          <gml:Point gml:id="lokale.2.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>410000.0 610000.0</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:serwis_rcn></ms:serwis_rcn>
+        <ms:teryt>0618</ms:teryt>
+        <ms:tran_przestrzen_nazw></ms:tran_przestrzen_nazw>
+        <ms:tran_lokalny_id_iip></ms:tran_lokalny_id_iip>
+        <ms:tran_wersja_id></ms:tran_wersja_id>
+        <ms:tran_oznaczenie_trans></ms:tran_oznaczenie_trans>
+        <ms:tran_rodzaj_trans>wolnyRynek</ms:tran_rodzaj_trans>
+        <ms:tran_rodzaj_rynku>pierwotny</ms:tran_rodzaj_rynku>
+        <ms:tran_sprzedajacy></ms:tran_sprzedajacy>
+        <ms:tran_kupujacy></ms:tran_kupujacy>
+        <ms:tran_cena_brutto>600000</ms:tran_cena_brutto>
+        <ms:tran_vat></ms:tran_vat>
+        <ms:dok_oznaczenie>AN 2/2024</ms:dok_oznaczenie>
+        <ms:dok_data>2024-06-20 00:00:00+02</ms:dok_data>
+        <ms:dok_tworca>NOTARY B</ms:dok_tworca>
+        <ms:nier_rodzaj></ms:nier_rodzaj>
+        <ms:nier_prawo></ms:nier_prawo>
+        <ms:nier_udzial>1/1</ms:nier_udzial>
+        <ms:nier_pow_gruntu></ms:nier_pow_gruntu>
+        <ms:nier_cena_brutto></ms:nier_cena_brutto>
+        <ms:nier_vat></ms:nier_vat>
+        <ms:lok_id_lokalu></ms:lok_id_lokalu>
+        <ms:lok_nr_lokalu></ms:lok_nr_lokalu>
+        <ms:lok_funkcja>mieszkalna</ms:lok_funkcja>
+        <ms:lok_liczba_izb>4</ms:lok_liczba_izb>
+        <ms:lok_nr_kond>1</ms:lok_nr_kond>
+        <ms:lok_pow_uzyt>80.0</ms:lok_pow_uzyt>
+        <ms:lok_pow_przyn></ms:lok_pow_przyn>
+        <ms:lok_cena_brutto></ms:lok_cena_brutto>
+        <ms:lok_vat></ms:lok_vat>
+        <ms:lok_adres></ms:lok_adres>
+      </ms:lokale>
+    </wfs:member>
+    <wfs:member>
+      <ms:lokale gml:id="lokale.3">
+        <ms:msGeometry>
+          <gml:Point gml:id="lokale.3.1" srsName="urn:ogc:def:crs:EPSG::2180">
+            <gml:pos>420000.0 620000.0</gml:pos>
+          </gml:Point>
+        </ms:msGeometry>
+        <ms:serwis_rcn></ms:serwis_rcn>
+        <ms:teryt>0617</ms:teryt>
+        <ms:tran_przestrzen_nazw></ms:tran_przestrzen_nazw>
+        <ms:tran_lokalny_id_iip></ms:tran_lokalny_id_iip>
+        <ms:tran_wersja_id></ms:tran_wersja_id>
+        <ms:tran_oznaczenie_trans></ms:tran_oznaczenie_trans>
+        <ms:tran_rodzaj_trans>wolnyRynek</ms:tran_rodzaj_trans>
+        <ms:tran_rodzaj_rynku>wtorny</ms:tran_rodzaj_rynku>
+        <ms:tran_sprzedajacy></ms:tran_sprzedajacy>
+        <ms:tran_kupujacy></ms:tran_kupujacy>
+        <ms:tran_cena_brutto>450000</ms:tran_cena_brutto>
+        <ms:tran_vat></ms:tran_vat>
+        <ms:dok_oznaczenie>AN 3/2024</ms:dok_oznaczenie>
+        <ms:dok_data>2024-01-28 00:00:00+01</ms:dok_data>
+        <ms:dok_tworca>NOTARY C</ms:dok_tworca>
+        <ms:nier_rodzaj></ms:nier_rodzaj>
+        <ms:nier_prawo></ms:nier_prawo>
+        <ms:nier_udzial>1/1</ms:nier_udzial>
+        <ms:nier_pow_gruntu></ms:nier_pow_gruntu>
+        <ms:nier_cena_brutto></ms:nier_cena_brutto>
+        <ms:nier_vat></ms:nier_vat>
+        <ms:lok_id_lokalu></ms:lok_id_lokalu>
+        <ms:lok_nr_lokalu></ms:lok_nr_lokalu>
+        <ms:lok_funkcja>mieszkalna</ms:lok_funkcja>
+        <ms:lok_liczba_izb>3</ms:lok_liczba_izb>
+        <ms:lok_nr_kond>5</ms:lok_nr_kond>
+        <ms:lok_pow_uzyt>60.0</ms:lok_pow_uzyt>
+        <ms:lok_pow_przyn></ms:lok_pow_przyn>
+        <ms:lok_cena_brutto></ms:lok_cena_brutto>
+        <ms:lok_vat></ms:lok_vat>
+        <ms:lok_adres></ms:lok_adres>
+      </ms:lokale>
+    </wfs:member>
+</wfs:FeatureCollection>
+"""
+
+
 @pytest.fixture(autouse=True)
 def _clear_caches():
     """Clear all caches between tests."""

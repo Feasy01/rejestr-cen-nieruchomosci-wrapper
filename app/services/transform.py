@@ -96,14 +96,21 @@ def feature_to_transaction(
     if include_raw:
         raw = dict(p)
 
+    price = _safe_decimal(p.get("tran_cena_brutto", ""))
+    area = _safe_decimal(p.get("lok_pow_uzyt", ""))
+    price_per_sqm: Decimal | None = None
+    if price is not None and area is not None and area > 0:
+        price_per_sqm = (price / area).quantize(Decimal("0.01"))
+
     return TransactionItem(
         id=feature.gml_id,
         doc_date=_parse_doc_date(p.get("dok_data", "")),
         doc_ref=_empty_to_none(p.get("dok_oznaczenie", "")),
         notary=_empty_to_none(p.get("dok_tworca", "")),
         market=_empty_to_none(p.get("tran_rodzaj_rynku", "")),
-        price_brutto=_safe_decimal(p.get("tran_cena_brutto", "")),
-        area_uzyt=_safe_decimal(p.get("lok_pow_uzyt", "")),
+        price_brutto=price,
+        area_uzyt=area,
+        price_per_sqm=price_per_sqm,
         function=_empty_to_none(p.get("lok_funkcja", "")),
         rooms=_safe_int(p.get("lok_liczba_izb", "")),
         floor=_empty_to_none(p.get("lok_nr_kond", "")),
@@ -123,10 +130,15 @@ def apply_local_filters(
     max_price: Decimal | None = None,
     min_area: Decimal | None = None,
     max_area: Decimal | None = None,
+    min_price_per_sqm: Decimal | None = None,
+    max_price_per_sqm: Decimal | None = None,
 ) -> list[ParsedFeature]:
     """Filter features locally on numeric/date fields that can't be
     reliably filtered upstream (because they're stored as strings)."""
-    if not any([date_from, date_to, min_price, max_price, min_area, max_area]):
+    if not any([
+        date_from, date_to, min_price, max_price, min_area, max_area,
+        min_price_per_sqm, max_price_per_sqm,
+    ]):
         return features
 
     result: list[ParsedFeature] = []
@@ -154,6 +166,35 @@ def apply_local_filters(
         if max_area is not None and (area is None or area > max_area):
             continue
 
+        # Price per m² filter
+        if min_price_per_sqm is not None or max_price_per_sqm is not None:
+            if price is None or area is None or area <= 0:
+                continue
+            ppsm = price / area
+            if min_price_per_sqm is not None and ppsm < min_price_per_sqm:
+                continue
+            if max_price_per_sqm is not None and ppsm > max_price_per_sqm:
+                continue
+
         result.append(f)
 
     return result
+
+
+def sort_items(
+    items: list[TransactionItem],
+    *,
+    sort_by: str,
+    descending: bool = False,
+) -> list[TransactionItem]:
+    """Sort TransactionItems by the given field. Items with None values sort last."""
+    with_value = []
+    without_value = []
+    for item in items:
+        if getattr(item, sort_by, None) is None:
+            without_value.append(item)
+        else:
+            with_value.append(item)
+
+    with_value.sort(key=lambda i: getattr(i, sort_by), reverse=descending)
+    return with_value + without_value
