@@ -15,7 +15,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.core.config import settings
-from app.routers import metadata, transactions
+from app.routers import metadata, stats, transactions
 from app.services.rcn_client import RCNClient
 
 logging.basicConfig(
@@ -63,6 +63,7 @@ async def request_id_middleware(request: Request, call_next) -> Response:  # typ
 
 
 app.include_router(transactions.router)
+app.include_router(stats.router)
 app.include_router(metadata.router)
 
 _STATIC_DIR = Path(__file__).resolve().parent.parent / "static"

@@ -2,7 +2,9 @@
 
 from unittest.mock import AsyncMock
 
-from tests.conftest import SAMPLE_EMPTY_XML, SAMPLE_FEATURE_XML
+import pytest
+
+from tests.conftest import SAMPLE_EMPTY_XML, SAMPLE_FEATURE_XML, SAMPLE_MULTI_FEATURE_XML
 
 
 class TestGetLokale:
@@ -148,6 +150,106 @@ class TestGetLokale:
     def test_request_id_header(self, test_client, mock_rcn_client):
         resp = test_client.get("/v1/transactions/lokale")
         assert "x-request-id" in resp.headers
+
+    # Feature 4: price_per_sqm
+    def test_price_per_sqm_computed(self, test_client, mock_rcn_client):
+        resp = test_client.get("/v1/transactions/lokale")
+        item = resp.json()["items"][0]
+        # 528916 / 60.36 ≈ 8763.42
+        assert item["price_per_sqm"] is not None
+        assert float(item["price_per_sqm"]) == pytest.approx(8763.42, abs=1)
+
+    def test_price_per_sqm_filter_min(self, test_client, mock_rcn_client):
+        # Sample item has ~8763 PLN/m², filter above should exclude it
+        resp = test_client.get("/v1/transactions/lokale?min_price_per_sqm=10000")
+        assert resp.status_code == 200
+        assert len(resp.json()["items"]) == 0
+
+    def test_price_per_sqm_filter_max(self, test_client, mock_rcn_client):
+        # Sample item has ~8763 PLN/m², filter below should exclude it
+        resp = test_client.get("/v1/transactions/lokale?max_price_per_sqm=5000")
+        assert resp.status_code == 200
+        assert len(resp.json()["items"]) == 0
+
+    def test_price_per_sqm_filter_matching(self, test_client, mock_rcn_client):
+        resp = test_client.get(
+            "/v1/transactions/lokale?min_price_per_sqm=8000&max_price_per_sqm=9000"
+        )
+        assert resp.status_code == 200
+        assert len(resp.json()["items"]) == 1
+
+    # Feature 8: Sorting
+    def test_sort_by_price(self, test_client, mock_rcn_client):
+        mock_rcn_client.get_feature = AsyncMock(return_value=SAMPLE_MULTI_FEATURE_XML)
+        resp = test_client.get(
+            "/v1/transactions/lokale?sort_by=price_brutto&sort_order=asc"
+        )
+        assert resp.status_code == 200
+        items = resp.json()["items"]
+        assert len(items) == 3
+        prices = [float(i["price_brutto"]) for i in items]
+        assert prices == sorted(prices)
+
+    def test_sort_by_price_desc(self, test_client, mock_rcn_client):
+        mock_rcn_client.get_feature = AsyncMock(return_value=SAMPLE_MULTI_FEATURE_XML)
+        resp = test_client.get(
+            "/v1/transactions/lokale?sort_by=price_brutto&sort_order=desc"
+        )
+        assert resp.status_code == 200
+        items = resp.json()["items"]
+        prices = [float(i["price_brutto"]) for i in items]
+        assert prices == sorted(prices, reverse=True)
+
+    def test_sort_by_rooms(self, test_client, mock_rcn_client):
+        mock_rcn_client.get_feature = AsyncMock(return_value=SAMPLE_MULTI_FEATURE_XML)
+        resp = test_client.get(
+            "/v1/transactions/lokale?sort_by=rooms&sort_order=asc"
+        )
+        assert resp.status_code == 200
+        items = resp.json()["items"]
+        rooms = [i["rooms"] for i in items]
+        assert rooms == sorted(rooms)
+
+    def test_sort_invalid_field(self, test_client, mock_rcn_client):
+        resp = test_client.get("/v1/transactions/lokale?sort_by=invalid")
+        assert resp.status_code == 422
+
+    # Feature 2: GeoJSON format
+    def test_geojson_format(self, test_client, mock_rcn_client):
+        resp = test_client.get("/v1/transactions/lokale?format=geojson")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["type"] == "FeatureCollection"
+        assert len(data["features"]) == 1
+        feature = data["features"][0]
+        assert feature["type"] == "Feature"
+        assert feature["geometry"]["type"] == "Point"
+        assert len(feature["geometry"]["coordinates"]) == 2
+        assert feature["properties"]["id"] == "lokale.3751688"
+        assert feature["properties"]["price_per_sqm"] is not None
+
+    def test_geojson_includes_metadata(self, test_client, mock_rcn_client):
+        resp = test_client.get("/v1/transactions/lokale?format=geojson")
+        data = resp.json()
+        assert "metadata" in data
+        assert data["metadata"]["page"] == 1
+        assert data["metadata"]["count"] == 1
+
+    def test_geojson_forces_geometry(self, test_client, mock_rcn_client):
+        # Even without include_geometry=true, geojson should have coordinates
+        resp = test_client.get("/v1/transactions/lokale?format=geojson")
+        data = resp.json()
+        coords = data["features"][0]["geometry"]["coordinates"]
+        # Should be real coords (not 0,0) since the sample has geometry
+        assert coords[0] != 0.0 or coords[1] != 0.0
+
+    def test_geojson_empty(self, test_client, mock_rcn_client):
+        mock_rcn_client.get_feature = AsyncMock(return_value=SAMPLE_EMPTY_XML)
+        resp = test_client.get("/v1/transactions/lokale?format=geojson")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["type"] == "FeatureCollection"
+        assert data["features"] == []
 
 
 class TestMetadataEndpoints:
